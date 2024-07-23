@@ -2,21 +2,20 @@ import express from "express"
 const app = express();
 const port = 3000;
 
+import { Task } from './task.model.js';
 
 app.use(express.json());
 
 
-let tasks = [];
-
-
-app.get('/tasks', (req, res) => {
+app.get('/tasks', async (req, res) => {
+    const tasks = await Task.findAll();
     res.json(tasks);
 });
 
 
-app.get('/tasks/:id', (req, res) => {
+app.get('/tasks/:id', async (req, res) => {
     const taskId = parseInt(req.params.id);
-    const task = tasks.find(t => t.id === taskId);
+    const task = await Task.findByPk(taskId);
 
     if (!task) {
         return res.status(404).json({ message: 'Task not found' });
@@ -26,45 +25,41 @@ app.get('/tasks/:id', (req, res) => {
 });
 
 
-app.post('/tasks', (req, res) => {
-    const newTask = {
-        id: Date.now(),
+app.post('/tasks', async (req, res) => {
+    const newTask = await Task.create({
         title: req.body.title,
         description: req.body.description,
-    };
+    });
 
-    tasks.push(newTask);
     res.status(201).json(newTask); 
 });
 
 
-app.put('/tasks/:id', (req, res) => {
+app.put('/tasks/:id', async (req, res) => {
     const taskId = parseInt(req.params.id);
-    const taskIndex = tasks.findIndex(t => t.id === taskId);
+    const task = await Task.findByPk(taskId);
 
-    if (taskIndex === -1) {
-    
+    if (!task) {
         return res.status(404).json({ message: 'Task not found' });
     }
 
-    tasks[taskIndex] = {
-        id: taskId,
+    await task.update({
         title: req.body.title,
         description: req.body.description,
-    };
+    });
 
-    res.json(tasks[taskIndex]);
+    res.json(task);
 });
 
-app.delete('/tasks/:id', (req, res) => {
+app.delete('/tasks/:id', async (req, res) => {
     const taskId = parseInt(req.params.id);
-    const taskIndex = tasks.findIndex(t => t.id === taskId);
+    const task = await Task.findByPk(taskId);
 
-    if (taskIndex === -1) {
+    if (!task) {
         return res.status(404).json({ message: 'Task not found' });
     }
 
-    tasks.splice(taskIndex, 1);
+    await task.destroy();
     res.json({ message: 'Task deleted' });
 });
 
