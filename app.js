@@ -1,4 +1,4 @@
-import express from "express"
+import express from "express";
 const app = express();
 const port = 3000;
 
@@ -7,37 +7,52 @@ import { Task } from './task.model.js';
 app.use(express.json());
 
 
-app.get('/tasks', async (req, res) => {
-    const tasks = await Task.findAll();
-    res.json(tasks);
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ message: 'Internal server error' });
 });
 
+app.get('/tasks', async (req, res, next) => {
+    try {
+        const tasks = await Task.findAll();
+        res.json(tasks);
+    } catch (error) {
+        next(error);
+    }
+});
 
-app.get('/tasks/:id', async (req, res) => {
-    const taskId = parseInt(req.params.id);
-    const task = await Task.findByPk(taskId);
+app.get('/tasks/:id', async (req, res, next) => {
+    try {
+        const taskId = parseInt(req.params.id);
+        const task = await Task.findByPk(taskId);
 
     if (!task) {
         return res.status(404).json({ message: 'Task not found' });
     }
 
     res.json(task);
+    } catch (error) {
+        next(error);
+    }
 });
 
-
-app.post('/tasks', async (req, res) => {
+app.post('/tasks', async (req, res, next) => {
+    try {
     const newTask = await Task.create({
         title: req.body.title,
         description: req.body.description,
     });
 
-    res.status(201).json(newTask); 
+    res.status(201).json(newTask);
+    } catch (error) {
+        next(error);
+    }
 });
 
-
-app.put('/tasks/:id', async (req, res) => {
-    const taskId = parseInt(req.params.id);
-    const task = await Task.findByPk(taskId);
+app.put('/tasks/:id', async (req, res, next) => {
+    try {
+        const taskId = parseInt(req.params.id);
+        const task = await Task.findByPk(taskId);
 
     if (!task) {
         return res.status(404).json({ message: 'Task not found' });
@@ -49,18 +64,25 @@ app.put('/tasks/:id', async (req, res) => {
     });
 
     res.json(task);
+    } catch (error) {
+        next(error);
+    }
 });
 
-app.delete('/tasks/:id', async (req, res) => {
-    const taskId = parseInt(req.params.id);
-    const task = await Task.findByPk(taskId);
+app.delete('/tasks/:id', async (req, res, next) => {
+    try {
+        const taskId = parseInt(req.params.id);
+        const task = await Task.findByPk(taskId);
 
     if (!task) {
         return res.status(404).json({ message: 'Task not found' });
     }
 
-    await task.destroy();
-    res.json({ message: 'Task deleted' });
+        await task.destroy();
+        res.json({ message: 'Task deleted' });
+    } catch (error) {
+        next(error);
+    }
 });
 
 app.listen(port, () => {
